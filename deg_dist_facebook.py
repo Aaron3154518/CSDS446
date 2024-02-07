@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 # Helper function to plot the histogram and ccdf in log-log scale for an array of counts
 def histogram(x: np.ndarray, hist_ax, ccdf_ax):
-    counts, bin_edges = np.histogram(x, x.max(), (0, x.max()))
+    x_max = x.max() + 1
+    counts, bin_edges = np.histogram(x, x_max, (0, x_max))
     cum_counts = 1 - np.cumsum(counts) / counts.sum()
     bin_centers = (bin_edges[:-1] + bin_edges[1:]) / 2.0
     hist_ax.scatter(bin_centers, counts, marker=".")
