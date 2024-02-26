@@ -24,7 +24,11 @@ def P_mle(A: np.ndarray, g: np.ndarray) -> np.ndarray:
     return np.array(
         [
             [
-                M[r, s] / len(gs[r]) / len(gs[s]) if len(gs[s]) * len(gs[r]) != 0 else 0
+                (
+                    M[r, s] / len(gs[r]) / len(gs[s])
+                    if len(gs[s]) * len(gs[r]) != 0
+                    else 0
+                )
                 for s in range(2)
             ]
             for r in range(2)
@@ -32,7 +36,9 @@ def P_mle(A: np.ndarray, g: np.ndarray) -> np.ndarray:
     )
 
 
-def Pg_mle(A: np.ndarray) -> Tuple[float, np.ndarray, np.ndarray]:
+def Pg_mle(
+    A: np.ndarray, assortative: bool = False
+) -> Tuple[float, np.ndarray, np.ndarray]:
     n = len(A)
     max_l = max_g = max_P = None
     for i in range(2**n):
@@ -40,10 +46,13 @@ def Pg_mle(A: np.ndarray) -> Tuple[float, np.ndarray, np.ndarray]:
         gs = groups(g)
         M = calc_M(A, gs)
         P = P_mle(A, g)
+        if assortative and P.diagonal().min() < (P - np.identity(len(P))).max():
+            continue
         l = 0.5 * sum(
             M[r, s] * plog(P[r, s])
             + (len(gs[r]) * len(gs[s]) - M[r, s]) * plog(1 - P[r, s])
-            for r, s in product(range(2), range(2))
+            for r in range(2)
+            for s in range(2)
         )
         if max_l is None or l > max_l:
             max_l, max_g, max_P = l, g, P
@@ -69,11 +78,15 @@ if __name__ == "__main__":
     g = np.array([0, 0, 0, 0, 0, 0, 0, 1, 1, 1])
 
     print("MLE P:", P_mle(A, g))
-    print()
 
+    print("\nFinding MLE Group Assignment:")
     max_l, max_g, max_P = Pg_mle(A)
+    print("Maximum Likelihood:", max_l)
+    print("Group Assignment:", [[g_i + 1 for g_i in g] for g in groups(max_g)])
+    print("P:", max_P)
 
-    print("Finding MLE Group Assignment:)
+    print("\nFinding Assortative MLE Group Assignment:")
+    max_l, max_g, max_P = Pg_mle(A, assortative=True)
     print("Maximum Likelihood:", max_l)
     print("Group Assignment:", [[g_i + 1 for g_i in g] for g in groups(max_g)])
     print("P:", max_P)
